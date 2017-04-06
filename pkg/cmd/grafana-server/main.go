@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	logging "log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -11,6 +12,9 @@ import (
 	"strconv"
 	"syscall"
 	"time"
+
+	"net/http"
+	_ "net/http/pprof"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -57,6 +61,11 @@ func main() {
 	setting.BuildVersion = version
 	setting.BuildCommit = commit
 	setting.BuildStamp = buildstampInt64
+
+	runtime.SetBlockProfileRate(1)
+	go func() {
+		logging.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
 
 	server := NewGrafanaServer()
 	server.Start()
